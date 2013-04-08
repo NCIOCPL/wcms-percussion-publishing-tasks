@@ -1,32 +1,15 @@
 function Main(){
 	LoadConfig("app.config");
+	$publishUrl = GetPublishUrl;
 
 	# Load the Notification XML
-	$doc = [xml](get-content syndicationlist.xml);
+	$doc = [xml](get-content $appSettings["syndicationFileName"]);
 
-	$docNsMgr = new-object Xml.XmlNamespaceManager $doc.NameTable
+	Execute-HTTPPostCommand $publishUrl $doc
+}
 
-	$docNsMgr.AddNamespace("catalog", "http://www.cdc.gov/socialmedia/syndication/SyndicationCatalog.xsd");
-	$docNsMgr.AddNamespace("content", "http://www.cdc.gov/socialmedia/syndication/SyndicationContent.xsd");
-
-	# Make a copy of the outermost Catalog node and CatalogSource.
-	# We'll then copy individual the CatalogItem nodes one at a time,
-	# each replacing the one before.
-	$noticeEnvelope = $doc.DocumentElement.CloneNode($False);
-	$catalogSource = $doc.SelectSingleNode("//catalog:CatalogSource", $docNsMgr);
-	if($catalogSource -eq $null) {echo "Error: Cannot locate CatalogSource element.";}
-	$bucket = $noticeEnvelope.AppendChild( $catalogSource );
-
-	# Build notification messages for each catalog item.
-	$catalogItems = $doc.SelectNodes("//catalog:CatalogItem", $docNsMgr);
-	$catalogItems | ForEach-Object {
-
-		$bucket = $noticeEnvelope.AppendChild($_);
-		
-		$noticeEnvelope.OuterXml | Out-file (".\DebugOut\" + $_.CatalogId + ".xml") -Encoding "UTF8";
-
-		$bucket = $noticeEnvelope.RemoveChild($_);
-	}
+function GetPublishUrl(){
+	return $appSettings["syndicationServer"] + $appSettings["syndicationPublishUrl"];
 }
 
 # Sends and HTTP POST request to the specified URL.
@@ -60,7 +43,7 @@ function Execute-HTTPPostCommand($targetUrl, $data) {
 
 # Loads configuration data in a format similar to that used by .Net.
 # Parses through an appSettings section, looking for keys added with an <add> element
-# and stores values in a hashtable with lookups based on the key attribute.
+# and stores values in a global hashtable ($appSettings) with lookups based on the key attribute.
 #
 # Based on code from http://rkeithhill.wordpress.com/2006/06/01/creating-and-using-a-configuration-file-for-your-powershell-scripts/
 function LoadConfig(){
