@@ -1,4 +1,6 @@
 function Main(){
+	LoadConfig("app.config");
+
 	# Load the Notification XML
 	$doc = [xml](get-content syndicationlist.xml);
 
@@ -55,5 +57,32 @@ function Execute-HTTPPostCommand($targetUrl, $data) {
 	
     return $results;
 }
+
+# Loads configuration data in a format similar to that used by .Net.
+# Parses through an appSettings section, looking for keys added with an <add> element
+# and stores values in a hashtable with lookups based on the key attribute.
+#
+# Based on code from http://rkeithhill.wordpress.com/2006/06/01/creating-and-using-a-configuration-file-for-your-powershell-scripts/
+function LoadConfig(){
+    param($path = $(throw "You must specify a config file"))
+
+    $global:appSettings = @{}
+    $config = [xml](get-content $path)
+    foreach ($addNode in $config.configuration.appsettings.add) {
+        if ($addNode.Value.Contains(‘,’)) {
+            # Array case
+            $value = $addNode.Value.Split(‘,’)
+            for ($i = 0; $i -lt $value.length; $i++) { 
+                $value[$i] = $value[$i].Trim() 
+            }
+        }
+        else {
+            # Scalar case
+            $value = $addNode.Value
+        }
+        $global:appSettings.Add($addNode.Key, $value)
+    }
+}
+
 
 Main;
