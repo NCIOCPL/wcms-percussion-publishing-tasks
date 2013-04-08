@@ -1,0 +1,1 @@
+C:\Windows\System32\robocopy "E:\publishing\PercussionSites\CDESites\%1\%2\PublishedContent" "e:\content\PercussionSites\CDESites\%1\%2\PublishedContent" /copy:DAT /DCOPY:T /MIR
