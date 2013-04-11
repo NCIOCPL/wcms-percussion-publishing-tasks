@@ -1,3 +1,5 @@
+Add-Type -AssemblyName System.Web;
+
 function Main(){
 	LoadConfig("app.config");
 	$publishUrl = GetPublishUrl;
@@ -5,42 +7,44 @@ function Main(){
 	# Load the Notification XML
 	$doc = [xml](get-content $appSettings["syndicationFileName"]);
 
-	Execute-HTTPPostCommand $publishUrl $doc
+	# Create a set of fields.
+	$fields = @{} # Empty hashtable
+	$fields.Add("xml", $doc.OuterXml);
+	
+	Execute-HTTPPostCommand $publishUrl $fields
 }
 
 function GetPublishUrl(){
 	return $appSettings["syndicationServer"] + $appSettings["syndicationPublishUrl"];
 }
 
-# Sends and HTTP POST request to the specified URL.
+# Sends an HTTP POST request to the specified URL.
 #
 # $targetUrl - URL to send the post to.
 # $data - data to transmit with the post.
-function Execute-HTTPPostCommand($targetUrl, $data) {
+function Execute-HTTPPostCommand($targetUrl, $fields) {
 
     $webRequest = [System.Net.WebRequest]::Create($targetUrl)
-    $webRequest.ContentType = "text/html"
-    $PostStr = [System.Text.Encoding]::UTF8.GetBytes($data)
-    $webrequest.ContentLength = $PostStr.Length
-    $webRequest.ServicePoint.Expect100Continue = $false
-
-    $webRequest.PreAuthenticate = $true
+    $webRequest.ContentType = "application/x-www-form-urlencoded";
+    #$PostStr = [System.Text.Encoding]::UTF8.GetBytes($data)
+    #$webrequest.ContentLength = $PostStr.Length
+	$webrequest.Referer = "CM_Syndication";
     $webRequest.Method = "POST"
 
-    $requestStream = $webRequest.GetRequestStream()
-    $requestStream.Write($PostStr, 0,$PostStr.length)
+    $requestStream = $webRequest.GetRequestStream()    
+	$fields.Keys | ForEach {
+		$data = $_ + "=" +  [System.Web.HttpUtility]::UrlEncode($fields[$_]);
+		$bytes = [System.Text.Encoding]::UTF8.GetBytes($data);
+		$requestStream.Write($bytes, 0, $bytes.length);
+	}
     $requestStream.Close()
 
     [System.Net.WebResponse] $resp = $webRequest.GetResponse();
-    $rs = $resp.GetResponseStream();
-    [System.IO.StreamReader] $sr = New-Object System.IO.StreamReader -argumentList $rs;
-    [string] $results = $sr.ReadToEnd();
 	
 	if(200 -ne [int]$resp.StatusCode){
 		Echo "Expected status 200, received instead: " [int]$resp.StatusCode
 	}
 	
-	$rs.Close();
 	$resp.Close();
 	
     return $results;
