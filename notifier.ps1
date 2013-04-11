@@ -35,6 +35,11 @@ function Execute-HTTPPostCommand($targetUrl, $data) {
     $rs = $resp.GetResponseStream();
     [System.IO.StreamReader] $sr = New-Object System.IO.StreamReader -argumentList $rs;
     [string] $results = $sr.ReadToEnd();
+	
+	if(200 -ne [int]$resp.StatusCode){
+		Echo "Expected status 200, received instead: " [int]$resp.StatusCode
+	}
+	
 	$rs.Close();
 	$resp.Close();
 	
