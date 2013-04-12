@@ -21,21 +21,25 @@ function GetPublishUrl(){
 # Sends an HTTP POST request to the specified URL.
 #
 # $targetUrl - URL to send the post to.
-# $data - data to transmit with the post.
+# $fields - Hashlist of name value pairs to send as fields.
 function Execute-HTTPPostCommand($targetUrl, $fields) {
 
     $webRequest = [System.Net.WebRequest]::Create($targetUrl)
     $webRequest.ContentType = "application/x-www-form-urlencoded";
-    #$PostStr = [System.Text.Encoding]::UTF8.GetBytes($data)
-    #$webrequest.ContentLength = $PostStr.Length
 	$webrequest.Referer = "CM_Syndication";
     $webRequest.Method = "POST"
 
     $requestStream = $webRequest.GetRequestStream()    
+    $first = $true;
 	$fields.Keys | ForEach {
 		$data = $_ + "=" +  [System.Web.HttpUtility]::UrlEncode($fields[$_]);
+        if(-not $first ){
+            $data = "&" + $data
+        }
+
 		$bytes = [System.Text.Encoding]::UTF8.GetBytes($data);
 		$requestStream.Write($bytes, 0, $bytes.length);
+        $first = $false;
 	}
     $requestStream.Close()
 
