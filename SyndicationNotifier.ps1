@@ -2,16 +2,66 @@ Add-Type -AssemblyName System.Web;
 
 function Main(){
 	LoadConfig("app.config");
-	$publishUrl = GetPublishUrl;
 
 	# Load the Notification XML
-	$doc = [xml](get-content $appSettings["syndicationFileName"]);
+	$doc = [xml](get-content $appSettings["syndicationFileName"] -encoding "UTF8");
 
-	# Create a set of fields.
-	$fields = @{} # Empty hashtable
-	$fields.Add("xml", $doc.OuterXml);
-	
-	Execute-HTTPPostCommand $publishUrl $fields
+    SendNotifications $doc
+}
+
+# Splits the master notification document into multiple small documents
+# and transmits them to the syndication network.
+function SendNotifications($notificationList) {
+	$publishUrl = GetPublishUrl;
+
+	[Xml.XmlNamespaceManager] $docNsMgr = GetNamespaceManager $notificationList;
+
+
+	# Make a copy of the outermost Catalog node and CatalogSource.
+	# We'll then copy individual the CatalogItem nodes one at a time,
+	# each replacing the one before.
+    $noticeEnvelope = CopyEnvelopeXml $docNsMgr $notificationList
+
+	# Build notification messages for each catalog item.
+	$catalogItems = $notificationList.SelectNodes("//catalog:CatalogItem", $docNsMgr);
+	$catalogItems | ForEach-Object {
+        # Fill in a specific content item
+        [void]$noticeEnvelope.AppendChild($_);
+
+        $noticeEnvelope.OuterXml | Out-file (".\DebugOut\" + $_.Id + ".xml") -Encoding "UTF8";
+
+        # Create a set of fields to send.
+	    $fields = @{} # Empty hashtable
+	    $fields.Add("xml", $doc.OuterXml);
+	    Execute-HTTPPostCommand $publishUrl $fields
+
+        # Remove the content item so we can reuse the envelope.
+        $bucket = $noticeEnvelope.RemoveChild($_);
+    }
+}
+
+# Builds the XML namespace manager for parsing the catalog XML.
+function GetNamespaceManager($document){
+   	$nsManager = new-object Xml.XmlNamespaceManager $doc.NameTable
+	[void]$nsManager.AddNamespace("catalog", "http://www.cdc.gov/socialmedia/syndication/SyndicationCatalog.xsd");
+	[void]$nsManager.AddNamespace("content", "http://www.cdc.gov/socialmedia/syndication/SyndicationContent.xsd");
+
+    # Freaking big kludge.  Putting a comma in the return here puts the object into
+    # an array, causing the namespace manager to be returned as the proper type.
+    # Otherwise, it would end up coming out the other side as an Object array.
+    return , [Xml.XmlNamespaceManager]$nsManager;
+}
+
+function CopyEnvelopeXml($docNsMgr, $document) {
+    # Outermost XML elements.
+	$noticeEnvelope = $document.DocumentElement.CloneNode($False);
+
+    # Copy the catalogSource node.
+	$catalogSource = $document.SelectSingleNode("//catalog:CatalogSource", $docNsMgr);
+	if($catalogSource -eq $null) {Throw "Error: Cannot locate CatalogSource element.";}
+	[void]$noticeEnvelope.AppendChild( $catalogSource );
+
+    return $noticeEnvelope;    
 }
 
 function GetPublishUrl(){
