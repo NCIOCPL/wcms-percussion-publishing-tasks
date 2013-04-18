@@ -32,7 +32,7 @@ function SendNotifications($notificationList) {
 
         # Create a set of fields to send.
 	    $fields = @{} # Empty hashtable
-	    $fields.Add("xml", $doc.OuterXml);
+	    $fields.Add("xml", $noticeEnvelope.OuterXml);
 	    Execute-HTTPPostCommand $publishUrl $fields
 
         # Remove the content item so we can reuse the envelope.
