@@ -5,8 +5,9 @@ function Main(){
 
 	# Load the Notification XML
 	$doc = [xml](get-content $appSettings["syndicationFileName"] -encoding "UTF8");
-
+	"Begin Notifications" | Out-File $appSettings["logfile"]
     SendNotifications $doc
+	"End Notifications" | Out-File $appSettings["logfile"] -Append
 }
 
 # Splits the master notification document into multiple small documents
@@ -28,12 +29,13 @@ function SendNotifications($notificationList) {
         # Fill in a specific content item
         [void]$noticeEnvelope.AppendChild($_);
 
-        $noticeEnvelope.OuterXml | Out-file (".\DebugOut\" + $_.Id + ".xml") -Encoding "UTF8";
-
         # Create a set of fields to send.
 	    $fields = @{} # Empty hashtable
 	    $fields.Add("xml", $noticeEnvelope.OuterXml);
-	    Execute-HTTPPostCommand $publishUrl $fields
+
+		# Send
+		"Sending '" + $_.ContentItem.Title + "' (" + $_.Id + ")"  | Out-File $appSettings["logfile"] -Append
+		Execute-HTTPPostCommand $publishUrl $fields
 
         # Remove the content item so we can reuse the envelope.
         $bucket = $noticeEnvelope.RemoveChild($_);
@@ -91,13 +93,24 @@ function Execute-HTTPPostCommand($targetUrl, $fields) {
 		$requestStream.Write($bytes, 0, $bytes.length);
         $first = $false;
 	}
-    $requestStream.Close()
+    $requestStream.Close();
 
     [System.Net.WebResponse] $resp = $webRequest.GetResponse();
 	
+	# Log unexpected response codes.
 	if(200 -ne [int]$resp.StatusCode){
-		Echo "Expected status 200, received instead: " [int]$resp.StatusCode
+		"Unexpected HTTP status received: " + [int]$resp.StatusCode | Out-File $appSettings["logfile"] -Append
+		"[Item Begins]" | Out-File $appSettings["logfile"] -Append
+		$data | Out-File $appSettings["logfile"] -Append
+		"[Item Ends]"  | Out-File $appSettings["logfile"] -Append
 	}
+	
+	# Save response body to log
+	$rs = $resp.GetResponseStream();
+	[System.IO.StreamReader] $sr = New-Object System.IO.StreamReader -argumentList $rs;
+    [string] $results = $sr.ReadToEnd();
+	$results | Out-File $appSettings["logfile"] -Append
+	$rs.Close();
 	
 	$resp.Close();
 	
