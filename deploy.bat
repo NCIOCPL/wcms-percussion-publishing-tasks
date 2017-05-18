@@ -1,1 +1,9 @@
-C:\Windows\System32\robocopy "E:\publishing\PercussionSites\CDESites\%1\%2\PublishedContent" "e:\content\PercussionSites\CDESites\%1\%2\PublishedContent" /copy:DAT /DCOPY:T /MIR
+@echo off
+rem Get paths into variables
+rem Batpath gets the path to this bat file.
+set batpath=%~dp0
+
+set my_sitename=%1
+set my_subsite=%2
+
+powershell -ExecutionPolicy RemoteSigned %batpath%deploy.ps1 -sitename %my_sitename% -subsite %my_subsite% < nul
