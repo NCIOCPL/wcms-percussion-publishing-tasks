@@ -32,22 +32,22 @@ function Main ($siteName, $subSite) {
 
         exit
     }
-    
+
     # Start time of robocopy process
     $startTime = Get-Date
-    
+
     # Perform robocopy of /publishing to /content
     $copy = Start-Process robocopy -ArgumentList "E:\publishing\PercussionSites\CDESites\$sitename\$subsite\PublishedContent e:\content\PercussionSites\CDESites\$sitename\$subsite\PublishedContent /copy:DAT /DCOPY:T /MIR" -NoNewWindow -PassThru -Wait
     $processid = $copy.Id
     $processexitcode = $copy.ExitCode
 
     # Write process ID of robocopy and timestamp of start in logs
-    Add-Content 'E:\Rhythmyx\AppServer\server\rx\log\robocopylog.txt' "Robocopy started for $siteName $subSite process $processid : $startTime"
+    Add-Content 'E:\Rhythmyx\jetty\base\logs\robocopylog.txt' "Robocopy started for $siteName $subSite process $processid : $startTime"
 
     # Write process ID of robocopy and timestamp of completion in logs
-    Add-Content 'E:\Rhythmyx\AppServer\server\rx\log\robocopylog.txt' "Robocopy finished for $siteName $subSite process $processid : $(Get-Date)"
+    Add-Content 'E:\Rhythmyx\jetty\base\logs\robocopylog.txt' "Robocopy finished for $siteName $subSite process $processid : $(Get-Date)"
 
-    Add-Content 'E:\Rhythmyx\AppServer\server\rx\log\robocopylog.txt' "Robocopy exited with code $processexitcode for $siteName $subSite process $processid"
+    Add-Content 'E:\Rhythmyx\jetty\base\logs\robocopylog.txt' "Robocopy exited with code $processexitcode for $siteName $subSite process $processid"
 
     Write-Host -foregroundcolor "green" "Deployment completed."
 }
