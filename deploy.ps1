@@ -42,10 +42,10 @@ function Main ($siteName, $subSite) {
     $startTime = Get-Date
     
     # Perform robocopy of /publishing to /content
-    if( -not $percsitetype ) {
-        $copy = Start-Process robocopy -ArgumentList "E:\publishing\PercussionSites\CDESites\$sitename\$subsite\PublishedContent e:\content\PercussionSites\CDESites\$sitename\$subsite\PublishedContent /copy:DAT /DCOPY:T /MIR" -NoNewWindow -PassThru -Wait
+	$copy = if( -not $percsitetype ) {
+		Start-Process robocopy -ArgumentList "E:\publishing\PercussionSites\CDESites\$sitename\$subsite\PublishedContent e:\content\PercussionSites\CDESites\$sitename\$subsite\PublishedContent /copy:DAT /DCOPY:T /MIR" -NoNewWindow -PassThru -Wait
     } Else {
-        $copy = Start-Process robocopy -ArgumentList "E:\publishing\StaticSites\$percsitetype\$sitename\$subsite e:\content\StaticSites\$percsitetype\$sitename\$subsite /copy:DAT /DCOPY:T /MIR" -NoNewWindow -PassThru -Wait        
+        Start-Process robocopy -ArgumentList "E:\publishing\PercussionSites\$percsitetype\$sitename\$subsite e:\content\PercussionSites\$percsitetype\$sitename\$subsite /copy:DAT /DCOPY:T /MIR" -NoNewWindow -PassThru -Wait        
     }
 
     $processid = $copy.Id
