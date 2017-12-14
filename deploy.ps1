@@ -1,18 +1,23 @@
 <#
     .SYNOPSIS
-       Deploys /publishing to /content for a CDE site and subsite
+        Deploys /publishing to /content for a site and subsite.
     .DESCRIPTION
-       Deploys the content ready for publishing in /publishing to the published
-       content folder /content for CancerGov, TCGA, DCEG, Proteomics, and Imaging.
-       Deploys both Live and Preview content.
+        Deploys the content ready for publishing in /publishing to the published
+        content folder /content.
+        Deploys both Live and Preview content for CancerGov, TCGA, DCEG, Proteomics, and Imaging.
+        Deploys content for Static.    
     .PARAMETER sitename
-        Name of the CDE site published content to deploy
+        Name of the site published content to deploy
     .PARAMETER subsite
-        Live or preview
+        Live or preview (CDE sites only)
+    .PARAMETER percsitetype
+        CDE or Static
 #>
 param (
     [string]$sitename,
-    [string]$subsite
+    [string]$subsite,
+    [Parameter(Mandatory=$False)]
+        [string]$percsitetype
 ) #end param
 
 function Main ($siteName, $subSite) {
@@ -37,7 +42,12 @@ function Main ($siteName, $subSite) {
     $startTime = Get-Date
     
     # Perform robocopy of /publishing to /content
-    $copy = Start-Process robocopy -ArgumentList "E:\publishing\PercussionSites\CDESites\$sitename\$subsite\PublishedContent e:\content\PercussionSites\CDESites\$sitename\$subsite\PublishedContent /copy:DAT /DCOPY:T /MIR" -NoNewWindow -PassThru -Wait
+    if( -not $percsitetype ) {
+        $copy = Start-Process robocopy -ArgumentList "E:\publishing\PercussionSites\CDESites\$sitename\$subsite\PublishedContent e:\content\PercussionSites\CDESites\$sitename\$subsite\PublishedContent /copy:DAT /DCOPY:T /MIR" -NoNewWindow -PassThru -Wait
+    } Else {
+        $copy = Start-Process robocopy -ArgumentList "E:\publishing\StaticSites\$percsitetype\$sitename e:\content\StaticSites\$percsitetype\$sitename /copy:DAT /DCOPY:T /MIR" -NoNewWindow -PassThru -Wait        
+    }
+
     $processid = $copy.Id
     $processexitcode = $copy.ExitCode
 
