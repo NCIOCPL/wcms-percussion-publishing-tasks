@@ -9,9 +9,9 @@
     .PARAMETER sitename
         Name of the site published content to deploy
     .PARAMETER subsite
-        Live or preview (CDE sites only)
+        Live or preview
     .PARAMETER percsitetype
-        CDE or Static
+        Static (Static sites only)
 #>
 param (
     [string]$sitename,
@@ -45,19 +45,19 @@ function Main ($siteName, $subSite) {
     if( -not $percsitetype ) {
         $copy = Start-Process robocopy -ArgumentList "E:\publishing\PercussionSites\CDESites\$sitename\$subsite\PublishedContent e:\content\PercussionSites\CDESites\$sitename\$subsite\PublishedContent /copy:DAT /DCOPY:T /MIR" -NoNewWindow -PassThru -Wait
     } Else {
-        $copy = Start-Process robocopy -ArgumentList "E:\publishing\StaticSites\$percsitetype\$sitename e:\content\StaticSites\$percsitetype\$sitename /copy:DAT /DCOPY:T /MIR" -NoNewWindow -PassThru -Wait        
+        $copy = Start-Process robocopy -ArgumentList "E:\publishing\StaticSites\$percsitetype\$sitename\$subsite e:\content\StaticSites\$percsitetype\$sitename\$subsite /copy:DAT /DCOPY:T /MIR" -NoNewWindow -PassThru -Wait        
     }
 
     $processid = $copy.Id
     $processexitcode = $copy.ExitCode
 
     # Write process ID of robocopy and timestamp of start in logs
-    Add-Content 'E:\Rhythmyx\AppServer\server\rx\log\robocopylog.txt' "Robocopy started for $siteName $subSite process $processid : $startTime"
+    Add-Content 'E:\Rhythmyx\jetty\base\logs\robocopylog.txt' "Robocopy started for $siteName $subSite process $processid : $startTime"
 
     # Write process ID of robocopy and timestamp of completion in logs
-    Add-Content 'E:\Rhythmyx\AppServer\server\rx\log\robocopylog.txt' "Robocopy finished for $siteName $subSite process $processid : $(Get-Date)"
+    Add-Content 'E:\Rhythmyx\jetty\base\logs\robocopylog.txt' "Robocopy finished for $siteName $subSite process $processid : $(Get-Date)"
 
-    Add-Content 'E:\Rhythmyx\AppServer\server\rx\log\robocopylog.txt' "Robocopy exited with code $processexitcode for $siteName $subSite process $processid"
+    Add-Content 'E:\Rhythmyx\jetty\base\logs\robocopylog.txt' "Robocopy exited with code $processexitcode for $siteName $subSite process $processid"
 
     Write-Host -foregroundcolor "green" "Deployment completed."
 }
