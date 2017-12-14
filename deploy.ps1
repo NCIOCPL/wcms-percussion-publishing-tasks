@@ -5,19 +5,15 @@
         Deploys the content ready for publishing in /publishing to the published
         content folder /content.
         Deploys both Live and Preview content for CancerGov, TCGA, DCEG, Proteomics, and Imaging.
-        Deploys content for Static.    
+        Deploys content for FlatSites.    
     .PARAMETER sitename
         Name of the site published content to deploy
     .PARAMETER subsite
-        Live or preview
-    .PARAMETER percsitetype
-        Static (Static sites only)
+        Live or Preview (CDESite), or Flat (FlatSites)
 #>
 param (
     [string]$sitename,
-    [string]$subsite,
-    [Parameter(Mandatory=$False)]
-        [string]$percsitetype
+    [string]$subsite
 ) #end param
 
 function Main ($siteName, $subSite) {
@@ -42,10 +38,10 @@ function Main ($siteName, $subSite) {
     $startTime = Get-Date
     
     # Perform robocopy of /publishing to /content
-	$copy = if( -not $percsitetype ) {
-		Start-Process robocopy -ArgumentList "E:\publishing\PercussionSites\CDESites\$sitename\$subsite\PublishedContent e:\content\PercussionSites\CDESites\$sitename\$subsite\PublishedContent /copy:DAT /DCOPY:T /MIR" -NoNewWindow -PassThru -Wait
+	$copy = if( $subsite -eq "flat" ) {
+        Start-Process robocopy -ArgumentList "E:\publishing\PercussionSites\FlatSites\$sitename e:\content\PercussionSites\FlatSites\$sitename /copy:DAT /DCOPY:T /MIR" -NoNewWindow -PassThru -Wait        
     } Else {
-        Start-Process robocopy -ArgumentList "E:\publishing\PercussionSites\$percsitetype\$sitename\$subsite e:\content\PercussionSites\$percsitetype\$sitename\$subsite /copy:DAT /DCOPY:T /MIR" -NoNewWindow -PassThru -Wait        
+		Start-Process robocopy -ArgumentList "E:\publishing\PercussionSites\CDESites\$sitename\$subsite\PublishedContent e:\content\PercussionSites\CDESites\$sitename\$subsite\PublishedContent /copy:DAT /DCOPY:T /MIR" -NoNewWindow -PassThru -Wait	
     }
 
     $processid = $copy.Id
