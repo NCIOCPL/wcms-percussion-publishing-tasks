@@ -38,10 +38,10 @@ function Main ($siteName, $subSite) {
     $startTime = Get-Date
     
     # Perform robocopy of /publishing to /content
-	$copy = if( $subsite -eq "flat" ) {
+    $copy = if( $subsite -eq "flat" ) {
         Start-Process robocopy -ArgumentList "E:\publishing\PercussionSites\FlatSites\$sitename e:\content\PercussionSites\FlatSites\$sitename /copy:DAT /DCOPY:T /MIR" -NoNewWindow -PassThru -Wait        
     } Else {
-		Start-Process robocopy -ArgumentList "E:\publishing\PercussionSites\CDESites\$sitename\$subsite\PublishedContent e:\content\PercussionSites\CDESites\$sitename\$subsite\PublishedContent /copy:DAT /DCOPY:T /MIR" -NoNewWindow -PassThru -Wait	
+        Start-Process robocopy -ArgumentList "E:\publishing\PercussionSites\CDESites\$sitename\$subsite\PublishedContent e:\content\PercussionSites\CDESites\$sitename\$subsite\PublishedContent /copy:DAT /DCOPY:T /MIR" -NoNewWindow -PassThru -Wait	
     }
 
     $processid = $copy.Id
